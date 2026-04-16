@@ -1,915 +1,920 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PJ排班日曆</title>
-    <style>
-        :root {
-            --brand: #3e6066;
-            --brand-2: #5f7d84;
-            --early: #d8efe0;
-            --late: #fde4d7;
-            --campaign: #fff3bf;
-            --campaign-border: #f2c94c;
-            --text: #233236;
-            --muted: #6f8186;
-            --border: #d9e4e7;
-            --bg: #f7fafb;
-            --white: #ffffff;
-            --shadow: 0 10px 30px rgba(62, 96, 102, 0.08);
-            --radius: 18px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-            background: linear-gradient(180deg, #f8fbfc 0%, #eef4f5 100%);
-            color: var(--text);
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .wrap {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 24px 16px 40px;
-        }
-
-        .card {
-            background: var(--white);
-            border: 1px solid rgba(62, 96, 102, 0.08);
-            border-radius: 24px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-
-        .header {
-            padding: 24px;
-            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
-            color: white;
-        }
-
-        .header h1 {
-            margin: 0 0 8px;
-            font-size: 28px;
-            line-height: 1.2;
-        }
-
-        .header p {
-            margin: 0;
-            opacity: 0.92;
-            font-size: 15px;
-        }
-
-        .toolbar {
-            padding: 18px 24px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border);
-            background: #fbfdfd;
-        }
-
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
-
-        label {
-            font-size: 14px;
-            color: var(--muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        select,
-        button,
-        textarea {
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            font-size: 15px;
-            background: white;
-            color: var(--text);
-            font-family: inherit;
-        }
-
-        select,
-        button {
-            padding: 10px 14px;
-        }
-
-        button {
-            cursor: pointer;
-            transition: 0.2s ease;
-        }
-
-        button.primary {
-            background: var(--brand);
-            color: white;
-            border-color: var(--brand);
-        }
-
-        button:hover {
-            transform: translateY(-1px);
-        }
-
-        button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            font-size: 14px;
-            color: var(--muted);
-        }
-
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 13px;
-            border: 1px solid var(--border);
-            background: white;
-        }
-
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .dot.early {
-            background: #8bc79d;
-        }
-
-        .dot.late {
-            background: #f0a97c;
-        }
-
-        .dot.campaign {
-            background: #f2c94c;
-        }
-
-        .calendar-area {
-            padding: 20px;
-            background: var(--bg);
-            touch-action: pan-y;
-            user-select: none;
-        }
-
-        .calendar-head {
-            display: flex;
-            align-items: end;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .month-title {
-            margin: 0;
-            font-size: 24px;
-            color: var(--brand);
-            font-weight: 700;
-        }
-
-        .swipe-hint {
-            font-size: 12px;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(7, minmax(0, 1fr));
-            gap: 6px;
-            width: 100%;
-        }
-
-        .weekday,
-        .day {
-            border-radius: var(--radius);
-        }
-
-        .weekday {
-            padding: 10px 6px;
-            text-align: center;
-            font-weight: 700;
-            background: #e8f0f1;
-            color: var(--brand);
-            font-size: 14px;
-        }
-
-        .day {
-            min-height: 124px;
-            background: white;
-            border: 1px solid var(--border);
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            position: relative;
-            transition: 0.18s ease;
-        }
-
-        .day.blank {
-            background: transparent;
-            border: 1px dashed rgba(62, 96, 102, 0.08);
-        }
-
-        .day.clickable:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(62, 96, 102, 0.08);
-            border-color: #bdd0d5;
-        }
-
-        .day.has-campaign {
-            border: 1.5px solid var(--campaign-border);
-            box-shadow: inset 0 0 0 1px rgba(242, 201, 76, 0.15);
-        }
-
-        .day.day-dragging {
-            box-shadow: 0 0 0 2px rgba(62, 96, 102, 0.2);
-            border-color: var(--brand);
-        }
-
-        .day-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 6px;
-        }
-
-        .date-num {
-            font-weight: 700;
-            font-size: 18px;
-            color: var(--text);
-            line-height: 1;
-        }
-
-        .top-badges {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-
-        .today,
-        .campaign-badge {
-            font-size: 11px;
-            padding: 3px 6px;
-            border-radius: 999px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .today {
-            color: white;
-            background: var(--brand);
-        }
-
-        .campaign-badge {
-            color: #7a5b00;
-            background: var(--campaign);
-            border: 1px solid rgba(242, 201, 76, 0.7);
-        }
-
-        .shift-tag {
-            width: fit-content;
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-weight: 700;
-            font-size: 13px;
-            line-height: 1.2;
-        }
-
-        .shift-early {
-            background: var(--early);
-            color: #2c6841;
-        }
-
-        .shift-late {
-            background: var(--late);
-            color: #9a4f22;
-        }
-
-        .day-bottom {
-            margin-top: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 6px;
-            min-width: 0;
-        }
-
-        .hint {
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.2;
-        }
-
-        .note-preview {
-            font-size: 11px;
-            color: #55656a;
-            line-height: 1.35;
-            word-break: break-word;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            overflow: hidden;
-        }
-
-        .empty-tip {
-            width: 22px;
-            height: 22px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 999px;
-            border: 1px dashed #c9d7da;
-            color: #aab8bc;
-            font-size: 14px;
-            line-height: 1;
-        }
-
-        .drag-help {
-            position: fixed;
-            left: 50%;
-            bottom: 18px;
-            transform: translateX(-50%);
-            background: rgba(35, 50, 54, 0.92);
-            color: white;
-            padding: 10px 14px;
-            border-radius: 999px;
-            font-size: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-            opacity: 0;
-            pointer-events: none;
-            transition: 0.18s ease;
-            z-index: 20;
-        }
-
-        .drag-help.show {
-            opacity: 1;
-        }
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(21, 34, 37, 0.42);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            z-index: 30;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-card {
-            width: 100%;
-            max-width: 440px;
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-        }
-
-        .modal-card h2 {
-            margin: 0 0 8px;
-            font-size: 24px;
-            color: var(--brand);
-        }
-
-        .modal-card p {
-            margin: 0 0 18px;
-            color: var(--muted);
-        }
-
-        .modal-section-title {
-            margin: 18px 0 10px;
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--brand);
-        }
-
-        .choices {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .choice-btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 16px;
-            text-align: left;
-            font-weight: 700;
-        }
-
-        .choice-btn[data-value="early"] {
-            background: #f3fbf5;
-        }
-
-        .choice-btn[data-value="late"] {
-            background: #fff5ef;
-        }
-
-        .choice-btn[data-value=""] {
-            background: #f7fafb;
-        }
-
-        .campaign-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 14px 16px;
-            border-radius: 16px;
-            background: #fffdf3;
-            border: 1px solid #f4e3a1;
-            margin-bottom: 16px;
-        }
-
-        .campaign-toggle label {
-            font-size: 15px;
-            color: var(--text);
-            font-weight: 700;
-            gap: 10px;
-        }
-
-        .campaign-toggle input {
-            width: 18px;
-            height: 18px;
-            accent-color: #c79b11;
-        }
-
-        #noteInput {
-            width: 100%;
-            min-height: 84px;
-            padding: 12px;
-            resize: vertical;
-            line-height: 1.45;
-            margin-bottom: 16px;
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        @media (max-width: 900px) {
-            .wrap {
-                padding: 12px 10px 24px;
-            }
-
-            .header {
-                padding: 18px;
-            }
-
-            .header h1 {
-                font-size: 23px;
-            }
-
-            .header p {
-                font-size: 14px;
-            }
-
-            .toolbar {
-                padding: 14px;
-                align-items: stretch;
-            }
-
-            .controls {
-                width: 100%;
-            }
-
-            .controls label {
-                flex: 1 1 calc(50% - 8px);
-                min-width: 140px;
-            }
-
-            .controls select,
-            .controls button {
-                width: 100%;
-            }
-
-            .legend {
-                width: 100%;
-            }
-
-            .calendar-area {
-                padding: 12px;
-            }
-
-            .month-title {
-                font-size: 20px;
-            }
-
-            .calendar {
-                gap: 4px;
-            }
-
-            .weekday {
-                font-size: 12px;
-                padding: 8px 4px;
-            }
-
-            .day,
-            .day.blank {
-                min-height: 86px;
-                padding: 7px;
-                border-radius: 14px;
-            }
-
-            .date-num {
-                font-size: 14px;
-            }
-
-            .shift-tag {
-                font-size: 11px;
-                padding: 4px 7px;
-            }
-
-            .campaign-badge,
-            .today {
-                font-size: 10px;
-                padding: 2px 5px;
-            }
-
-            .hint,
-            .note-preview,
-            .empty-tip {
-                font-size: 10px;
-            }
-        }
-
-        @media (max-width: 560px) {
-            .wrap {
-                padding: 8px 6px 18px;
-            }
-
-            .header {
-                padding: 14px;
-            }
-
-            .header h1 {
-                font-size: 20px;
-            }
-
-            .header p {
-                font-size: 12px;
-            }
-
-            .toolbar {
-                padding: 10px;
-                gap: 8px;
-            }
-
-            .controls {
-                gap: 8px;
-            }
-
-            .controls label,
-            .controls button {
-                flex: 1 1 100%;
-            }
-
-            .legend {
-                gap: 6px;
-            }
-
-            .pill {
-                font-size: 11px;
-                padding: 5px 8px;
-            }
-
-            .calendar-head {
-                align-items: center;
-                margin-bottom: 10px;
-            }
-
-            .month-title {
-                font-size: 18px;
-            }
-
-            .swipe-hint {
-                font-size: 10px;
-            }
-
-            .calendar {
-                gap: 3px;
-            }
-
-            .weekday {
-                font-size: 10px;
-                padding: 7px 2px;
-                border-radius: 10px;
-            }
-
-            .day,
-            .day.blank {
-                min-height: 74px;
-                padding: 5px;
-                gap: 4px;
-                border-radius: 10px;
-            }
-
-            .date-num {
-                font-size: 12px;
-            }
-
-            .top-badges {
-                gap: 3px;
-            }
-
-            .today,
-            .campaign-badge {
-                font-size: 9px;
-                padding: 2px 4px;
-            }
-
-            .shift-tag {
-                font-size: 10px;
-                padding: 3px 6px;
-            }
-
-            .hint,
-            .note-preview,
-            .empty-tip {
-                font-size: 9px;
-            }
-
-            .modal-card {
-                padding: 18px;
-                border-radius: 18px;
-            }
-
-            .modal-card h2 {
-                font-size: 20px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>排班日曆</title>
+  <style>
+    :root {
+      --brand: #3e6066;
+      --brand-2: #5f7d84;
+      --early: #d8efe0;
+      --late: #fde4d7;
+      --campaign: #fff3bf;
+      --campaign-border: #f2c94c;
+      --text: #233236;
+      --muted: #6f8186;
+      --border: #d9e4e7;
+      --bg: #f7fafb;
+      --white: #ffffff;
+      --shadow: 0 10px 30px rgba(62, 96, 102, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: linear-gradient(180deg, #f8fbfc 0%, #eef4f5 100%);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid rgba(62, 96, 102, 0.08);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 24px;
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+      color: white;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .header p {
+      margin: 0;
+      opacity: 0.92;
+      font-size: 15px;
+    }
+
+    .toolbar {
+      padding: 18px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: #fbfdfd;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    label {
+      font-size: 14px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    select, button, textarea {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      background: white;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    select, button {
+      padding: 10px 14px;
+    }
+
+    button {
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button.primary {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      background: white;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot.early { background: #8bc79d; }
+    .dot.late { background: #f0a97c; }
+    .dot.campaign { background: #f2c94c; }
+
+    .calendar-area {
+      padding: 20px;
+      background: var(--bg);
+      overflow: hidden;
+      touch-action: pan-y;
+      user-select: none;
+    }
+
+    .swipe-stage {
+      will-change: transform;
+      transition: transform 0.24s ease;
+    }
+
+    .swipe-stage.is-dragging {
+      transition: none;
+    }
+
+    .calendar-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .month-title {
+      margin: 0;
+      font-size: 24px;
+      color: var(--brand);
+      font-weight: 700;
+    }
+
+    .swipe-hint {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+      width: 100%;
+    }
+
+    .weekday, .day {
+      border-radius: var(--radius);
+    }
+
+    .weekday {
+      padding: 10px 6px;
+      text-align: center;
+      font-weight: 700;
+      background: #e8f0f1;
+      color: var(--brand);
+      font-size: 14px;
+    }
+
+    .day {
+      min-height: 124px;
+      background: white;
+      border: 1px solid var(--border);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      transition: 0.18s ease;
+    }
+
+    .day.blank {
+      background: transparent;
+      border: 1px dashed rgba(62, 96, 102, 0.08);
+    }
+
+    .day.clickable:hover {
+      transform: translateY(-2px);
+      border-color: #3e6066;
+      box-shadow: 0 0 0 2px rgba(62, 96, 102, 0.15),
+                  0 8px 20px rgba(62, 96, 102, 0.08);
+    }
+
+    .day.has-campaign {
+      border: 1.5px solid var(--campaign-border);
+      box-shadow: inset 0 0 0 1px rgba(242, 201, 76, 0.15);
+    }
+
+    .day.day-dragging {
+      box-shadow: 0 0 0 2px rgba(62, 96, 102, 0.2);
+      border-color: var(--brand);
+    }
+
+    .day-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .date-num {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .top-badges {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .today,
+    .campaign-badge {
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .today {
+      color: white;
+      background: var(--brand);
+    }
+
+    .campaign-badge {
+      color: #7a5b00;
+      background: var(--campaign);
+      border: 1px solid rgba(242, 201, 76, 0.7);
+    }
+
+    .shift-tag {
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .shift-early {
+      background: var(--early);
+      color: #2c6841;
+    }
+
+    .shift-late {
+      background: var(--late);
+      color: #9a4f22;
+    }
+
+    .day-bottom {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.2;
+    }
+
+    .note-preview {
+      font-size: 11px;
+      color: #55656a;
+      line-height: 1.35;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+    }
+
+    .empty-tip {
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px dashed #c9d7da;
+      color: #aab8bc;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .drag-help {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(35, 50, 54, 0.92);
+      color: white;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.18s ease;
+      z-index: 20;
+    }
+
+    .drag-help.show {
+      opacity: 1;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(21, 34, 37, 0.42);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 30;
+    }
+
+    .modal.show { display: flex; }
+
+    .modal-card {
+      width: 100%;
+      max-width: 440px;
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+
+    .modal-card h2 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      color: var(--brand);
+    }
+
+    .modal-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .modal-section-title {
+      margin: 18px 0 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brand);
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .choice-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      text-align: left;
+      font-weight: 700;
+    }
+
+    .choice-btn[data-value="early"] { background: #f3fbf5; }
+    .choice-btn[data-value="late"] { background: #fff5ef; }
+    .choice-btn[data-value=""] { background: #f7fafb; }
+
+    .campaign-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #fffdf3;
+      border: 1px solid #f4e3a1;
+      margin-bottom: 16px;
+    }
+
+    .campaign-toggle label {
+      font-size: 15px;
+      color: var(--text);
+      font-weight: 700;
+      gap: 10px;
+    }
+
+    .campaign-toggle input {
+      width: 18px;
+      height: 18px;
+      accent-color: #c79b11;
+    }
+
+    #noteInput {
+      width: 100%;
+      min-height: 84px;
+      padding: 12px;
+      resize: vertical;
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+      .wrap {
+        padding: 12px 10px 24px;
+      }
+
+      .header {
+        padding: 18px;
+      }
+
+      .header h1 {
+        font-size: 23px;
+      }
+
+      .header p {
+        font-size: 14px;
+      }
+
+      .toolbar {
+        padding: 14px;
+        align-items: stretch;
+      }
+
+      .controls {
+        width: 100%;
+      }
+
+      .controls label {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 140px;
+      }
+
+      .controls select,
+      .controls button {
+        width: 100%;
+      }
+
+      .legend {
+        width: 100%;
+      }
+
+      .calendar-area {
+        padding: 12px;
+      }
+
+      .month-title {
+        font-size: 20px;
+      }
+
+      .calendar {
+        gap: 4px;
+      }
+
+      .weekday {
+        font-size: 12px;
+        padding: 8px 4px;
+      }
+
+      .day,
+      .day.blank {
+        min-height: 86px;
+        padding: 7px;
+        border-radius: 14px;
+      }
+
+      .date-num {
+        font-size: 14px;
+      }
+
+      .shift-tag {
+        font-size: 11px;
+        padding: 4px 7px;
+      }
+
+      .campaign-badge,
+      .today {
+        font-size: 10px;
+        padding: 2px 5px;
+      }
+
+      .hint,
+      .note-preview,
+      .empty-tip {
+        font-size: 10px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .wrap {
+        padding: 8px 6px 18px;
+      }
+
+      .header {
+        padding: 14px;
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
+
+      .header p {
+        font-size: 12px;
+      }
+
+      .toolbar {
+        padding: 10px;
+        gap: 8px;
+      }
+
+      .controls {
+        gap: 8px;
+      }
+
+      .controls label,
+      .controls button {
+        flex: 1 1 100%;
+      }
+
+      .legend {
+        gap: 6px;
+      }
+
+      .pill {
+        font-size: 11px;
+        padding: 5px 8px;
+      }
+
+      .calendar-head {
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .month-title {
+        font-size: 18px;
+      }
+
+      .swipe-hint {
+        font-size: 10px;
+      }
+
+      .calendar {
+        gap: 3px;
+      }
+
+      .weekday {
+        font-size: 10px;
+        padding: 7px 2px;
+        border-radius: 10px;
+      }
+
+      .day,
+      .day.blank {
+        min-height: 74px;
+        padding: 5px;
+        gap: 4px;
+        border-radius: 10px;
+      }
+
+      .date-num {
+        font-size: 12px;
+      }
+
+      .top-badges {
+        gap: 3px;
+      }
+
+      .today,
+      .campaign-badge {
+        font-size: 9px;
+        padding: 2px 4px;
+      }
+
+      .shift-tag {
+        font-size: 10px;
+        padding: 3px 6px;
+      }
+
+      .hint,
+      .note-preview,
+      .empty-tip {
+        font-size: 9px;
+      }
+
+      .modal-card {
+        padding: 18px;
+        border-radius: 18px;
+      }
+
+      .modal-card h2 {
+        font-size: 20px;
+      }
+    }
+  </style>
 </head>
-
 <body>
-    <div class="wrap">
-        <div class="card">
-            <div class="header">
-                <h1>PJ班表</h1>
-                <p>可切換年份、月份，點選日期後標示早班、晚班，並註記是否為電商大檔與備註，方便同步確認。</p>
-            </div>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <h1>遠端同事排班日曆</h1>
+        <p>可切換年份、月份，點選日期後標示早班、晚班，並註記是否為電商大檔與備註，方便同步確認。</p>
+      </div>
 
-            <div class="toolbar">
-                <div class="controls">
-                    <label>
-                        年份
-                        <select id="yearSelect"></select>
-                    </label>
-                    <label>
-                        月份
-                        <select id="monthSelect"></select>
-                    </label>
-                    <button id="todayBtn">回到本月</button>
-                    <button id="clearMonthBtn">清空本月標示</button>
-                </div>
-
-                <div class="legend">
-                    <span class="pill"><span class="dot early"></span>早班</span>
-                    <span class="pill"><span class="dot late"></span>晚班</span>
-                    <span class="pill"><span class="dot campaign"></span>電商大檔</span>
-                </div>
-            </div>
-
-            <div class="calendar-area" id="calendarArea">
-                <div class="calendar-head">
-                    <h2 class="month-title" id="monthTitle"></h2>
-                    <div class="swipe-hint">手機可左右滑動切換月份</div>
-                </div>
-                <div class="calendar" id="calendar"></div>
-            </div>
+      <div class="toolbar">
+        <div class="controls">
+          <label>
+            年份
+            <select id="yearSelect"></select>
+          </label>
+          <label>
+            月份
+            <select id="monthSelect"></select>
+          </label>
+          <button id="todayBtn">回到本月</button>
+          <button id="clearMonthBtn">清空本月標示</button>
         </div>
-    </div>
 
-    <div class="drag-help" id="dragHelp">可按住已設定班別後拖曳，快速套用到其他日期</div>
-    <div class="drag-help" id="statusToast" style="bottom:62px;"></div>
-
-    <div class="modal" id="shiftModal">
-        <div class="modal-card">
-            <h2 id="modalDateTitle">設定班別</h2>
-            <p>請設定這一天的排班、是否為電商大檔與備註。</p>
-
-            <div class="modal-section-title">班別</div>
-            <div class="choices">
-                <button type="button" class="choice-btn" data-value="early">☀️ 早班</button>
-                <button type="button" class="choice-btn" data-value="late">🌙 晚班</button>
-                <button type="button" class="choice-btn" data-value="">清除班別</button>
-            </div>
-
-            <div class="modal-section-title">特殊註記</div>
-            <div class="campaign-toggle">
-                <label for="campaignCheckbox">⭐ 標示為電商大檔</label>
-                <input type="checkbox" id="campaignCheckbox" />
-            </div>
-
-            <div class="modal-section-title">備註</div>
-            <textarea id="noteInput" placeholder="例如：請假、外出、重要事項"></textarea>
-
-            <div class="modal-actions">
-                <button type="button" id="saveModalBtn" class="primary">儲存</button>
-                <button type="button" id="closeModalBtn">取消</button>
-            </div>
+        <div class="legend">
+          <span class="pill"><span class="dot early"></span>早班</span>
+          <span class="pill"><span class="dot late"></span>晚班</span>
+          <span class="pill"><span class="dot campaign"></span>電商大檔</span>
         </div>
+      </div>
+
+      <div class="calendar-area" id="calendarArea">
+        <div class="swipe-stage" id="swipeStage">
+          <div class="calendar-head">
+            <h2 class="month-title" id="monthTitle"></h2>
+            <div class="swipe-hint">手機：短滑換月份／長按已排班別後拖曳套用</div>
+          </div>
+          <div class="calendar" id="calendar"></div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import {
-            getDatabase,
-            ref,
-            set,
-            remove,
-            onValue,
-            update
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  <div class="drag-help" id="dragHelp">可按住已設定班別後拖曳，快速套用到其他日期</div>
+  <div class="drag-help" id="statusToast" style="bottom:62px;"></div>
 
-        const yearSelect = document.getElementById('yearSelect');
-        const monthSelect = document.getElementById('monthSelect');
-        const monthTitle = document.getElementById('monthTitle');
-        const calendar = document.getElementById('calendar');
-        const calendarArea = document.getElementById('calendarArea');
-        const todayBtn = document.getElementById('todayBtn');
-        const clearMonthBtn = document.getElementById('clearMonthBtn');
-        const shiftModal = document.getElementById('shiftModal');
-        const modalDateTitle = document.getElementById('modalDateTitle');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-        const saveModalBtn = document.getElementById('saveModalBtn');
-        const choiceButtons = document.querySelectorAll('.choice-btn');
-        const campaignCheckbox = document.getElementById('campaignCheckbox');
-        const noteInput = document.getElementById('noteInput');
-        const dragHelp = document.getElementById('dragHelp');
-        const statusToast = document.getElementById('statusToast');
+  <div class="modal" id="shiftModal">
+    <div class="modal-card">
+      <h2 id="modalDateTitle">設定班別</h2>
+      <p>請設定這一天的排班、是否為電商大檔與備註。</p>
 
-        const weekNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-        const shortWeekNames = ['日', '一', '二', '三', '四', '五', '六'];
+      <div class="modal-section-title">班別</div>
+      <div class="choices">
+        <button type="button" class="choice-btn" data-value="early">☀️ 早班</button>
+        <button type="button" class="choice-btn" data-value="late">🌙 晚班</button>
+        <button type="button" class="choice-btn" data-value="">清除班別</button>
+      </div>
 
-        const today = new Date();
-        let currentYear = today.getFullYear();
-        let currentMonth = today.getMonth();
-        let activeDateKey = '';
-        let selectedShiftValue = '';
-        let shiftData = {};
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let dragMode = false;
-        let dragShiftValue = '';
-        let dragTouchedKeys = new Set();
-        let dragStarted = false;
-        let dragSourceKey = '';
-        let suppressNextClick = false;
+      <div class="modal-section-title">特殊註記</div>
+      <div class="campaign-toggle">
+        <label for="campaignCheckbox">⭐ 標示為電商大檔</label>
+        <input type="checkbox" id="campaignCheckbox" />
+      </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDF0khZIJHtYCJhu0pTf3FEN3kL8ck7w",
-            authDomain: "shift-arrangement.firebaseapp.com",
-            databaseURL: "https://shift-arrangement-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "shift-arrangement",
-            storageBucket: "shift-arrangement.firebasestorage.app",
-            messagingSenderId: "218542467269",
-            appId: "1:218542467269:web:aa440ce0abe02c27b9e8ac"
-        };
+      <div class="modal-section-title">備註</div>
+      <textarea id="noteInput" placeholder="例如：請假、外出、重要事項"></textarea>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const shiftsRef = ref(db, 'shiftCalendar');
+      <div class="modal-actions">
+        <button type="button" id="saveModalBtn" class="primary">儲存</button>
+        <button type="button" id="closeModalBtn">取消</button>
+      </div>
+    </div>
+  </div>
 
-        onValue(shiftsRef, (snapshot) => {
-            shiftData = snapshot.val() || {};
-            renderCalendar();
-        });
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import {
+      getDatabase,
+      ref,
+      set,
+      remove,
+      onValue,
+      update
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
-        function getDateKey(year, month, day) {
-            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        }
+    const yearSelect = document.getElementById('yearSelect');
+    const monthSelect = document.getElementById('monthSelect');
+    const monthTitle = document.getElementById('monthTitle');
+    const calendar = document.getElementById('calendar');
+    const calendarArea = document.getElementById('calendarArea');
+    const swipeStage = document.getElementById('swipeStage');
+    const todayBtn = document.getElementById('todayBtn');
+    const clearMonthBtn = document.getElementById('clearMonthBtn');
+    const shiftModal = document.getElementById('shiftModal');
+    const modalDateTitle = document.getElementById('modalDateTitle');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const saveModalBtn = document.getElementById('saveModalBtn');
+    const choiceButtons = document.querySelectorAll('.choice-btn');
+    const campaignCheckbox = document.getElementById('campaignCheckbox');
+    const noteInput = document.getElementById('noteInput');
+    const dragHelp = document.getElementById('dragHelp');
+    const statusToast = document.getElementById('statusToast');
 
-        function getDayData(dateKey) {
-            return shiftData[dateKey] || { shift: '', campaign: false, note: '' };
-        }
+    const weekNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    const shortWeekNames = ['日', '一', '二', '三', '四', '五', '六'];
+    const LONG_PRESS_MS = 280;
+    const SWIPE_THRESHOLD = 70;
 
-        function populateSelectors() {
-            for (let y = today.getFullYear() - 3; y <= today.getFullYear() + 3; y += 1) {
-                const option = document.createElement('option');
-                option.value = y;
-                option.textContent = `${y} 年`;
-                if (y === currentYear) option.selected = true;
-                yearSelect.appendChild(option);
-            }
+    const today = new Date();
+    let currentYear = today.getFullYear();
+    let currentMonth = today.getMonth();
+    let activeDateKey = '';
+    let selectedShiftValue = '';
+    let shiftData = {};
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchCurrentX = 0;
+    let swipeActive = false;
+    let dragMode = false;
+    let dragShiftValue = '';
+    let dragTouchedKeys = new Set();
+    let dragStarted = false;
+    let dragSourceKey = '';
+    let suppressNextClick = false;
+    let longPressTimer = null;
+    let potentialDragCell = null;
+    let longPressTriggered = false;
+    let touchMoved = false;
 
-            for (let m = 0; m < 12; m += 1) {
-                const option = document.createElement('option');
-                option.value = m;
-                option.textContent = `${m + 1} 月`;
-                if (m === currentMonth) option.selected = true;
-                monthSelect.appendChild(option);
-            }
-        }
+    const firebaseConfig = {
+      apiKey: "AIzaSyDF0khZIJHtYCJhu0pTf3FEN3kL8ck7w",
+      authDomain: "shift-arrangement.firebaseapp.com",
+      databaseURL: "https://shift-arrangement-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "shift-arrangement",
+      storageBucket: "shift-arrangement.firebasestorage.app",
+      messagingSenderId: "218542467269",
+      appId: "1:218542467269:web:aa440ce0abe02c27b9e8ac"
+    };
 
-        function getShiftLabel(shift) {
-            if (shift === 'early') return { text: '早班', cls: 'shift-early' };
-            if (shift === 'late') return { text: '晚班', cls: 'shift-late' };
-            return { text: '', cls: '' };
-        }
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const shiftsRef = ref(db, 'shiftCalendar');
 
-        function escapeHtml(text) {
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
+    onValue(shiftsRef, (snapshot) => {
+      shiftData = snapshot.val() || {};
+      renderCalendar();
+    });
 
-        function highlightSelectedShift() {
-            choiceButtons.forEach((btn) => {
-                const isSelected = btn.dataset.value === selectedShiftValue;
-                btn.style.outline = isSelected ? '2px solid #3e6066' : 'none';
-                btn.style.boxShadow = isSelected ? '0 0 0 4px rgba(62, 96, 102, 0.08)' : 'none';
-            });
-        }
+    function getDateKey(year, month, day) {
+      return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
 
-        function changeMonthBy(offset) {
-            const next = new Date(currentYear, currentMonth + offset, 1);
-            currentYear = next.getFullYear();
-            currentMonth = next.getMonth();
-            yearSelect.value = currentYear;
-            monthSelect.value = currentMonth;
-            renderCalendar();
-        }
+    function getDayData(dateKey) {
+      return shiftData[dateKey] || { shift: '', campaign: false, note: '' };
+    }
 
-        function renderCalendar() {
-            calendar.innerHTML = '';
-            monthTitle.textContent = `${currentYear} 年 ${currentMonth + 1} 月`;
+    function populateSelectors() {
+      for (let y = today.getFullYear() - 3; y <= today.getFullYear() + 3; y += 1) {
+        const option = document.createElement('option');
+        option.value = y;
+        option.textContent = `${y} 年`;
+        if (y === currentYear) option.selected = true;
+        yearSelect.appendChild(option);
+      }
 
-            shortWeekNames.forEach((name) => {
-                const weekday = document.createElement('div');
-                weekday.className = 'weekday';
-                weekday.textContent = name;
-                calendar.appendChild(weekday);
-            });
+      for (let m = 0; m < 12; m += 1) {
+        const option = document.createElement('option');
+        option.value = m;
+        option.textContent = `${m + 1} 月`;
+        if (m === currentMonth) option.selected = true;
+        monthSelect.appendChild(option);
+      }
+    }
 
-            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    function getShiftLabel(shift) {
+      if (shift === 'early') return { text: '早班', cls: 'shift-early' };
+      if (shift === 'late') return { text: '晚班', cls: 'shift-late' };
+      return { text: '', cls: '' };
+    }
 
-            for (let i = 0; i < firstDay; i += 1) {
-                const blank = document.createElement('div');
-                blank.className = 'day blank';
-                calendar.appendChild(blank);
-            }
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
-            for (let day = 1; day <= daysInMonth; day += 1) {
-                const date = new Date(currentYear, currentMonth, day);
-                const dateKey = getDateKey(currentYear, currentMonth, day);
-                const dayData = getDayData(dateKey);
-                const shiftInfo = getShiftLabel(dayData.shift);
+    function highlightSelectedShift() {
+      choiceButtons.forEach((btn) => {
+        const isSelected = btn.dataset.value === selectedShiftValue;
+        btn.style.outline = isSelected ? '2px solid #3e6066' : 'none';
+        btn.style.boxShadow = isSelected ? '0 0 0 4px rgba(62, 96, 102, 0.08)' : 'none';
+      });
+    }
 
-                const cell = document.createElement('div');
-                cell.className = `day clickable ${dayData.campaign ? 'has-campaign' : ''}`;
-                cell.dataset.dateKey = dateKey;
-                cell.dataset.shift = dayData.shift || '';
+    function changeMonthBy(offset) {
+      const next = new Date(currentYear, currentMonth + offset, 1);
+      currentYear = next.getFullYear();
+      currentMonth = next.getMonth();
+      yearSelect.value = currentYear;
+      monthSelect.value = currentMonth;
+      renderCalendar();
+    }
 
-                const isToday =
-                    day === today.getDate() &&
-                    currentMonth === today.getMonth() &&
-                    currentYear === today.getFullYear();
+    function setSwipeTranslate(x, withTransition = false) {
+      swipeStage.classList.toggle('is-dragging', !withTransition);
+      swipeStage.style.transition = withTransition ? 'transform 0.24s ease' : 'none';
+      swipeStage.style.transform = `translateX(${x}px)`;
+    }
 
-                const safeNote = dayData.note ? escapeHtml(dayData.note) : '';
-                const shiftHtml = shiftInfo.text
-                    ? `<div class="shift-tag ${shiftInfo.cls}">${shiftInfo.text}</div>`
-                    : '<div class="empty-tip" aria-label="點選設定班別">+</div>';
+    function resetSwipePosition() {
+      setSwipeTranslate(0, true);
+    }
 
-                cell.innerHTML = `
+    function renderCalendar() {
+      calendar.innerHTML = '';
+      monthTitle.textContent = `${currentYear} 年 ${currentMonth + 1} 月`;
+      resetSwipePosition();
+
+      shortWeekNames.forEach((name) => {
+        const weekday = document.createElement('div');
+        weekday.className = 'weekday';
+        weekday.textContent = name;
+        calendar.appendChild(weekday);
+      });
+
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i += 1) {
+        const blank = document.createElement('div');
+        blank.className = 'day blank';
+        calendar.appendChild(blank);
+      }
+
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dateKey = getDateKey(currentYear, currentMonth, day);
+        const dayData = getDayData(dateKey);
+        const shiftInfo = getShiftLabel(dayData.shift);
+
+        const cell = document.createElement('div');
+        cell.className = `day clickable ${dayData.campaign ? 'has-campaign' : ''}`;
+        cell.dataset.dateKey = dateKey;
+        cell.dataset.shift = dayData.shift || '';
+
+        const isToday =
+          day === today.getDate() &&
+          currentMonth === today.getMonth() &&
+          currentYear === today.getFullYear();
+
+        const safeNote = dayData.note ? escapeHtml(dayData.note) : '';
+        const shiftHtml = shiftInfo.text
+          ? `<div class="shift-tag ${shiftInfo.cls}">${shiftInfo.text}</div>`
+          : '<div class="empty-tip" aria-label="點選設定班別">+</div>';
+
+        cell.innerHTML = `
           <div class="day-top">
             <div class="date-num">${day}</div>
             <div class="top-badges">
@@ -924,269 +929,349 @@
           </div>
         `;
 
-                cell.addEventListener('click', () => {
-                    if (suppressNextClick || dragStarted) {
-                        suppressNextClick = false;
-                        return;
-                    }
-                    openModal(dateKey, `${currentYear} 年 ${currentMonth + 1} 月 ${day} 日`);
-                });
-
-                cell.addEventListener('pointerdown', handleDragStart);
-                cell.addEventListener('pointerenter', handleDragEnter);
-
-                calendar.appendChild(cell);
-            }
-        }
-
-        function openModal(dateKey, label) {
-            activeDateKey = dateKey;
-            const dayData = getDayData(dateKey);
-            selectedShiftValue = dayData.shift || '';
-            campaignCheckbox.checked = !!dayData.campaign;
-            noteInput.value = dayData.note || '';
-            highlightSelectedShift();
-            modalDateTitle.textContent = label;
-            shiftModal.classList.add('show');
-        }
-
-        function closeModal() {
-            shiftModal.classList.remove('show');
-            activeDateKey = '';
-            selectedShiftValue = '';
-            noteInput.value = '';
-            highlightSelectedShift();
-        }
-
-        choiceButtons.forEach((btn) => {
-            btn.addEventListener('click', () => {
-                selectedShiftValue = btn.dataset.value;
-                highlightSelectedShift();
-            });
+        cell.addEventListener('click', () => {
+          if (suppressNextClick || dragStarted) {
+            suppressNextClick = false;
+            return;
+          }
+          openModal(dateKey, `${currentYear} 年 ${currentMonth + 1} 月 ${day} 日`);
         });
 
-        function showDragHelp() {
-            dragHelp.classList.add('show');
-            clearTimeout(showDragHelp.timer);
-            showDragHelp.timer = setTimeout(() => {
-                dragHelp.classList.remove('show');
-            }, 1400);
+        cell.addEventListener('pointerdown', handleDragStart);
+        cell.addEventListener('pointerenter', handleDragEnter);
+
+        calendar.appendChild(cell);
+      }
+    }
+
+    function openModal(dateKey, label) {
+      activeDateKey = dateKey;
+      const dayData = getDayData(dateKey);
+      selectedShiftValue = dayData.shift || '';
+      campaignCheckbox.checked = !!dayData.campaign;
+      noteInput.value = dayData.note || '';
+      highlightSelectedShift();
+      modalDateTitle.textContent = label;
+      shiftModal.classList.add('show');
+    }
+
+    function closeModal() {
+      shiftModal.classList.remove('show');
+      activeDateKey = '';
+      selectedShiftValue = '';
+      noteInput.value = '';
+      highlightSelectedShift();
+    }
+
+    choiceButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        selectedShiftValue = btn.dataset.value;
+        highlightSelectedShift();
+      });
+    });
+
+    function showDragHelp() {
+      dragHelp.classList.add('show');
+      clearTimeout(showDragHelp.timer);
+      showDragHelp.timer = setTimeout(() => {
+        dragHelp.classList.remove('show');
+      }, 1400);
+    }
+
+    function showStatus(message, isError = false) {
+      statusToast.textContent = message;
+      statusToast.style.background = isError ? 'rgba(156, 53, 53, 0.95)' : 'rgba(35, 50, 54, 0.92)';
+      statusToast.classList.add('show');
+      clearTimeout(showStatus.timer);
+      showStatus.timer = setTimeout(() => {
+        statusToast.classList.remove('show');
+      }, 1800);
+    }
+
+    saveModalBtn.addEventListener('click', async () => {
+      if (!activeDateKey) return;
+
+      const currentKey = activeDateKey;
+      const trimmedNote = noteInput.value.trim();
+      const newData = {
+        shift: selectedShiftValue,
+        campaign: campaignCheckbox.checked,
+        note: trimmedNote
+      };
+
+      saveModalBtn.disabled = true;
+      saveModalBtn.textContent = '儲存中...';
+
+      const backup = shiftData[currentKey] ? { ...shiftData[currentKey] } : null;
+
+      try {
+        if (!newData.shift && !newData.campaign && !newData.note) {
+          delete shiftData[currentKey];
+          renderCalendar();
+          closeModal();
+          await remove(ref(db, `shiftCalendar/${currentKey}`));
+        } else {
+          shiftData[currentKey] = newData;
+          renderCalendar();
+          closeModal();
+          await set(ref(db, `shiftCalendar/${currentKey}`), newData);
         }
-
-        function showStatus(message, isError = false) {
-            statusToast.textContent = message;
-            statusToast.style.background = isError ? 'rgba(156, 53, 53, 0.95)' : 'rgba(35, 50, 54, 0.92)';
-            statusToast.classList.add('show');
-            clearTimeout(showStatus.timer);
-            showStatus.timer = setTimeout(() => {
-                statusToast.classList.remove('show');
-            }, 1800);
+        showStatus('已儲存');
+      } catch (error) {
+        if (backup) {
+          shiftData[currentKey] = backup;
+        } else {
+          delete shiftData[currentKey];
         }
-
-        saveModalBtn.addEventListener('click', async () => {
-            if (!activeDateKey) return;
-
-            const currentKey = activeDateKey;
-            const trimmedNote = noteInput.value.trim();
-            const newData = {
-                shift: selectedShiftValue,
-                campaign: campaignCheckbox.checked,
-                note: trimmedNote
-            };
-
-            saveModalBtn.disabled = true;
-            saveModalBtn.textContent = '儲存中...';
-
-            const backup = shiftData[currentKey] ? { ...shiftData[currentKey] } : null;
-
-            try {
-                if (!newData.shift && !newData.campaign && !newData.note) {
-                    delete shiftData[currentKey];
-                    renderCalendar();
-                    closeModal();
-                    await remove(ref(db, `shiftCalendar/${currentKey}`));
-                } else {
-                    shiftData[currentKey] = newData;
-                    renderCalendar();
-                    closeModal();
-                    await set(ref(db, `shiftCalendar/${currentKey}`), newData);
-                }
-                showStatus('已儲存');
-            } catch (error) {
-                if (backup) {
-                    shiftData[currentKey] = backup;
-                } else {
-                    delete shiftData[currentKey];
-                }
-                renderCalendar();
-                console.error(error);
-                showStatus('儲存失敗，請稍後再試', true);
-            } finally {
-                saveModalBtn.disabled = false;
-                saveModalBtn.textContent = '儲存';
-            }
-        });
-
-        closeModalBtn.addEventListener('click', closeModal);
-
-        shiftModal.addEventListener('click', (e) => {
-            if (e.target === shiftModal) closeModal();
-        });
-
-        yearSelect.addEventListener('change', () => {
-            currentYear = Number(yearSelect.value);
-            renderCalendar();
-        });
-
-        monthSelect.addEventListener('change', () => {
-            currentMonth = Number(monthSelect.value);
-            renderCalendar();
-        });
-
-        todayBtn.addEventListener('click', () => {
-            currentYear = today.getFullYear();
-            currentMonth = today.getMonth();
-            yearSelect.value = currentYear;
-            monthSelect.value = currentMonth;
-            renderCalendar();
-        });
-
-        clearMonthBtn.addEventListener('click', async () => {
-            const confirmed = confirm(`確定要清空 ${currentYear} 年 ${currentMonth + 1} 月的所有標示嗎？`);
-            if (!confirmed) return;
-
-            const prefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-`;
-            const entries = Object.keys(shiftData).filter((key) => key.startsWith(prefix));
-
-            try {
-                await Promise.all(entries.map((key) => remove(ref(db, `shiftCalendar/${key}`))));
-                showStatus('本月已清空');
-            } catch (error) {
-                console.error(error);
-                showStatus('清空失敗，請稍後再試', true);
-            }
-        });
-
-        function clearDragHighlights() {
-            document.querySelectorAll('.day-dragging').forEach((cell) => {
-                cell.classList.remove('day-dragging');
-            });
-        }
-
-        function handleDragStart(event) {
-            if (event.pointerType === 'mouse' && event.button !== 0) return;
-            if (shiftModal.classList.contains('show')) return;
-
-            const cell = event.currentTarget;
-            const shift = cell.dataset.shift;
-            if (!shift) return;
-
-            dragMode = true;
-            dragStarted = false;
-            dragShiftValue = shift;
-            dragSourceKey = cell.dataset.dateKey;
-            dragTouchedKeys = new Set([dragSourceKey]);
-            cell.classList.add('day-dragging');
-            showDragHelp();
-        }
-
-        function handleDragEnter(event) {
-            if (!dragMode) return;
-            const cell = event.currentTarget;
-            const key = cell.dataset.dateKey;
-            if (!key || dragTouchedKeys.has(key)) return;
-            dragStarted = true;
-            dragTouchedKeys.add(key);
-            cell.classList.add('day-dragging');
-        }
-
-        function handleGlobalPointerMove(event) {
-            if (!dragMode) return;
-            const element = document.elementFromPoint(event.clientX, event.clientY);
-            if (!element) return;
-            const cell = element.closest('.day.clickable');
-            if (!cell) return;
-            const key = cell.dataset.dateKey;
-            if (!key || dragTouchedKeys.has(key)) return;
-            dragStarted = true;
-            dragTouchedKeys.add(key);
-            cell.classList.add('day-dragging');
-        }
-
-        async function finishDrag() {
-            if (!dragMode) return;
-
-            try {
-                if (dragStarted && dragTouchedKeys.size > 0) {
-                    const updates = {};
-                    dragTouchedKeys.forEach((key) => {
-                        const existing = getDayData(key);
-                        updates[`shiftCalendar/${key}`] = {
-                            shift: dragShiftValue,
-                            campaign: !!existing.campaign,
-                            note: existing.note || ''
-                        };
-                    });
-
-                    dragTouchedKeys.forEach((key) => {
-                        const existing = getDayData(key);
-                        shiftData[key] = {
-                            shift: dragShiftValue,
-                            campaign: !!existing.campaign,
-                            note: existing.note || ''
-                        };
-                    });
-
-                    renderCalendar();
-                    await update(ref(db), updates);
-                    showStatus('已批次套用班別');
-                    suppressNextClick = true;
-                }
-            } catch (error) {
-                console.error(error);
-                showStatus('拖曳套用失敗', true);
-            }
-
-            dragMode = false;
-            dragShiftValue = '';
-            dragTouchedKeys.clear();
-            dragStarted = false;
-            dragSourceKey = '';
-            clearDragHighlights();
-        }
-
-        window.addEventListener('pointermove', handleGlobalPointerMove);
-
-        window.addEventListener('pointerup', () => {
-            finishDrag();
-        });
-
-        window.addEventListener('pointercancel', () => {
-            finishDrag();
-        });
-
-        calendarArea.addEventListener('touchstart', (e) => {
-            if (dragMode || shiftModal.classList.contains('show')) return;
-            const touch = e.changedTouches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-        }, { passive: true });
-
-        calendarArea.addEventListener('touchend', (e) => {
-            if (dragMode || shiftModal.classList.contains('show')) return;
-            const touch = e.changedTouches[0];
-            const dx = touch.clientX - touchStartX;
-            const dy = touch.clientY - touchStartY;
-
-            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-                if (dx < 0) changeMonthBy(1);
-                if (dx > 0) changeMonthBy(-1);
-            }
-        }, { passive: true });
-
-        populateSelectors();
         renderCalendar();
-    </script>
-</body>
+        console.error(error);
+        showStatus('儲存失敗，請稍後再試', true);
+      } finally {
+        saveModalBtn.disabled = false;
+        saveModalBtn.textContent = '儲存';
+      }
+    });
 
+    closeModalBtn.addEventListener('click', closeModal);
+
+    shiftModal.addEventListener('click', (e) => {
+      if (e.target === shiftModal) closeModal();
+    });
+
+    yearSelect.addEventListener('change', () => {
+      currentYear = Number(yearSelect.value);
+      renderCalendar();
+    });
+
+    monthSelect.addEventListener('change', () => {
+      currentMonth = Number(monthSelect.value);
+      renderCalendar();
+    });
+
+    todayBtn.addEventListener('click', () => {
+      currentYear = today.getFullYear();
+      currentMonth = today.getMonth();
+      yearSelect.value = currentYear;
+      monthSelect.value = currentMonth;
+      renderCalendar();
+    });
+
+    clearMonthBtn.addEventListener('click', async () => {
+      const confirmed = confirm(`確定要清空 ${currentYear} 年 ${currentMonth + 1} 月的所有標示嗎？`);
+      if (!confirmed) return;
+
+      const prefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-`;
+      const entries = Object.keys(shiftData).filter((key) => key.startsWith(prefix));
+
+      try {
+        await Promise.all(entries.map((key) => remove(ref(db, `shiftCalendar/${key}`))));
+        showStatus('本月已清空');
+      } catch (error) {
+        console.error(error);
+        showStatus('清空失敗，請稍後再試', true);
+      }
+    });
+
+    function clearDragHighlights() {
+      document.querySelectorAll('.day-dragging').forEach((cell) => {
+        cell.classList.remove('day-dragging');
+      });
+    }
+
+    function beginDragFromCell(cell) {
+      const shift = cell?.dataset?.shift;
+      if (!shift) return false;
+      dragMode = true;
+      dragStarted = false;
+      dragShiftValue = shift;
+      dragSourceKey = cell.dataset.dateKey;
+      dragTouchedKeys = new Set([dragSourceKey]);
+      cell.classList.add('day-dragging');
+      showDragHelp();
+      return true;
+    }
+
+    function handleDragStart(event) {
+      if (event.pointerType !== 'mouse' || event.button !== 0) return;
+      if (shiftModal.classList.contains('show')) return;
+      beginDragFromCell(event.currentTarget);
+    }
+
+    function handleDragEnter(event) {
+      if (!dragMode) return;
+      const cell = event.currentTarget;
+      const key = cell.dataset.dateKey;
+      if (!key || dragTouchedKeys.has(key)) return;
+      dragStarted = true;
+      dragTouchedKeys.add(key);
+      cell.classList.add('day-dragging');
+    }
+
+    function handleGlobalPointerMove(event) {
+      if (!dragMode) return;
+      const element = document.elementFromPoint(event.clientX, event.clientY);
+      if (!element) return;
+      const cell = element.closest('.day.clickable');
+      if (!cell) return;
+      const key = cell.dataset.dateKey;
+      if (!key || dragTouchedKeys.has(key)) return;
+      dragStarted = true;
+      dragTouchedKeys.add(key);
+      cell.classList.add('day-dragging');
+    }
+
+    async function finishDrag() {
+      if (!dragMode) return;
+
+      try {
+        if (dragStarted && dragTouchedKeys.size > 0) {
+          const updates = {};
+          dragTouchedKeys.forEach((key) => {
+            const existing = getDayData(key);
+            updates[`shiftCalendar/${key}`] = {
+              shift: dragShiftValue,
+              campaign: !!existing.campaign,
+              note: existing.note || ''
+            };
+          });
+
+          dragTouchedKeys.forEach((key) => {
+            const existing = getDayData(key);
+            shiftData[key] = {
+              shift: dragShiftValue,
+              campaign: !!existing.campaign,
+              note: existing.note || ''
+            };
+          });
+
+          renderCalendar();
+          await update(ref(db), updates);
+          showStatus('已批次套用班別');
+          suppressNextClick = true;
+        }
+      } catch (error) {
+        console.error(error);
+        showStatus('拖曳套用失敗', true);
+      }
+
+      dragMode = false;
+      dragShiftValue = '';
+      dragTouchedKeys.clear();
+      dragStarted = false;
+      dragSourceKey = '';
+      clearDragHighlights();
+    }
+
+    window.addEventListener('pointermove', handleGlobalPointerMove);
+
+    window.addEventListener('pointerup', () => {
+      finishDrag();
+    });
+
+    window.addEventListener('pointercancel', () => {
+      finishDrag();
+    });
+
+    function clearLongPressTimer() {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      potentialDragCell = null;
+    }
+
+    calendarArea.addEventListener('touchstart', (e) => {
+      if (shiftModal.classList.contains('show')) return;
+      const touch = e.changedTouches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchCurrentX = touch.clientX;
+      swipeActive = false;
+      touchMoved = false;
+      longPressTriggered = false;
+
+      const cell = e.target.closest('.day.clickable');
+      if (cell && cell.dataset.shift) {
+        potentialDragCell = cell;
+        longPressTimer = setTimeout(() => {
+          longPressTriggered = beginDragFromCell(cell);
+        }, LONG_PRESS_MS);
+      }
+    }, { passive: true });
+
+    calendarArea.addEventListener('touchmove', (e) => {
+      if (shiftModal.classList.contains('show')) return;
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+      touchCurrentX = touch.clientX;
+
+      if (dragMode) {
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        const cell = element?.closest('.day.clickable');
+        if (cell) {
+          const key = cell.dataset.dateKey;
+          if (key && !dragTouchedKeys.has(key)) {
+            dragStarted = true;
+            dragTouchedKeys.add(key);
+            cell.classList.add('day-dragging');
+          }
+        }
+        e.preventDefault();
+        return;
+      }
+
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        touchMoved = true;
+      }
+
+      if (!longPressTriggered && Math.abs(dx) > 10) {
+        clearLongPressTimer();
+      }
+
+      if (!longPressTriggered && Math.abs(dx) > Math.abs(dy) * 1.15) {
+        swipeActive = true;
+        setSwipeTranslate(dx, false);
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    calendarArea.addEventListener('touchend', async (e) => {
+      clearLongPressTimer();
+
+      if (dragMode) {
+        await finishDrag();
+        return;
+      }
+
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStartX;
+      const absDx = Math.abs(dx);
+      const width = calendarArea.clientWidth || 320;
+
+      if (swipeActive && absDx > SWIPE_THRESHOLD) {
+        const direction = dx < 0 ? -1 : 1;
+        const targetX = direction < 0 ? -width : width;
+        setSwipeTranslate(targetX, true);
+        setTimeout(() => {
+          changeMonthBy(direction < 0 ? 1 : -1);
+        }, 180);
+      } else {
+        resetSwipePosition();
+      }
+
+      swipeActive = false;
+    }, { passive: true });
+
+    calendarArea.addEventListener('touchcancel', async () => {
+      clearLongPressTimer();
+      if (dragMode) {
+        await finishDrag();
+      }
+      swipeActive = false;
+      resetSwipePosition();
+    }, { passive: true });
+
+    populateSelectors();
+    renderCalendar();
+  </script>
+</body>
 </html>

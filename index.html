@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>排班日曆</title>
+  <title>PJ排班日曆</title>
   <style>
     :root {
       --brand: #3e6066;
-      --brand-light: #edf4f5;
+      --brand-2: #5f7d84;
       --early: #d8efe0;
       --late: #fde4d7;
       --campaign: #fff3bf;
@@ -22,6 +22,7 @@
     }
 
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
@@ -30,7 +31,7 @@
     }
 
     .wrap {
-      max-width: 1100px;
+      max-width: 1120px;
       margin: 0 auto;
       padding: 24px 16px 40px;
     }
@@ -45,7 +46,7 @@
 
     .header {
       padding: 24px;
-      background: linear-gradient(135deg, var(--brand) 0%, #5f7d84 100%);
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
       color: white;
     }
 
@@ -87,13 +88,20 @@
       gap: 8px;
     }
 
-    select, button {
+    select,
+    button,
+    textarea {
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 10px 14px;
       font-size: 15px;
       background: white;
       color: var(--text);
+      font-family: inherit;
+    }
+
+    select,
+    button {
+      padding: 10px 14px;
     }
 
     button {
@@ -146,13 +154,6 @@
       background: var(--bg);
     }
 
-    .calendar-scroll {
-      width: 100%;
-      overflow-x: auto;
-      overflow-y: visible;
-      -webkit-overflow-scrolling: touch;
-    }
-
     .month-title {
       margin: 0 0 14px;
       font-size: 24px;
@@ -163,17 +164,17 @@
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: 10px;
+      gap: 6px;
       width: 100%;
-      min-width: 760px;
     }
 
-    .weekday, .day {
+    .weekday,
+    .day {
       border-radius: var(--radius);
     }
 
     .weekday {
-      padding: 12px 8px;
+      padding: 10px 6px;
       text-align: center;
       font-weight: 700;
       background: #e8f0f1;
@@ -185,10 +186,10 @@
       min-height: 124px;
       background: white;
       border: 1px solid var(--border);
-      padding: 12px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       position: relative;
       transition: 0.18s ease;
     }
@@ -196,6 +197,7 @@
     .day.blank {
       background: transparent;
       border: 1px dashed rgba(62, 96, 102, 0.08);
+      min-height: 124px;
     }
 
     .day.clickable:hover {
@@ -212,48 +214,52 @@
     .day-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      gap: 8px;
+      align-items: flex-start;
+      gap: 6px;
     }
 
     .date-num {
       font-weight: 700;
       font-size: 18px;
       color: var(--text);
+      line-height: 1;
     }
 
     .top-badges {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
 
-    .today {
-      font-size: 12px;
-      padding: 4px 8px;
+    .today,
+    .campaign-badge {
+      font-size: 11px;
+      padding: 3px 6px;
       border-radius: 999px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .today {
       color: white;
       background: var(--brand);
     }
 
     .campaign-badge {
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
       color: #7a5b00;
       background: var(--campaign);
       border: 1px solid rgba(242, 201, 76, 0.7);
-      font-weight: 700;
     }
 
     .shift-tag {
       width: fit-content;
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 999px;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13px;
+      line-height: 1.2;
     }
 
     .shift-early {
@@ -271,29 +277,30 @@
       color: #819398;
     }
 
-    .campaign-tag {
-      width: fit-content;
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 13px;
-      background: #fff8d9;
-      color: #8a6700;
-      border: 1px solid rgba(242, 201, 76, 0.6);
-    }
-
     .day-bottom {
       margin-top: auto;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 8px;
+      gap: 6px;
+      min-width: 0;
     }
 
     .hint {
       font-size: 12px;
       color: var(--muted);
-      line-height: 1.4;
+      line-height: 1.2;
+    }
+
+    .note-preview {
+      font-size: 11px;
+      color: #55656a;
+      line-height: 1.35;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .modal {
@@ -311,7 +318,7 @@
 
     .modal-card {
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
       background: white;
       border-radius: 24px;
       padding: 24px;
@@ -347,11 +354,8 @@
       width: 100%;
       padding: 14px;
       border-radius: 16px;
-      border: 1px solid var(--border);
-      background: white;
-      font-size: 16px;
-      font-weight: 700;
       text-align: left;
+      font-weight: 700;
     }
 
     .choice-btn[data-value="early"] { background: #f3fbf5; }
@@ -383,10 +387,20 @@
       accent-color: #c79b11;
     }
 
+    #noteInput {
+      width: 100%;
+      min-height: 84px;
+      padding: 12px;
+      resize: vertical;
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+
     .modal-actions {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     body.screenshot-mode .wrap {
@@ -436,8 +450,7 @@
     }
 
     body.screenshot-mode .calendar {
-      min-width: 0;
-      gap: 6px;
+      gap: 4px;
     }
 
     body.screenshot-mode .weekday {
@@ -446,15 +459,16 @@
       border-radius: 12px;
     }
 
-    body.screenshot-mode .day {
-      min-height: 92px;
+    body.screenshot-mode .day,
+    body.screenshot-mode .day.blank {
+      min-height: 88px;
       padding: 8px;
-      gap: 6px;
+      gap: 5px;
       border-radius: 12px;
     }
 
     body.screenshot-mode .date-num {
-      font-size: 15px;
+      font-size: 14px;
     }
 
     body.screenshot-mode .hint {
@@ -462,14 +476,12 @@
     }
 
     body.screenshot-mode .shift-tag {
-      font-size: 12px;
-      padding: 5px 8px;
+      font-size: 11px;
+      padding: 4px 8px;
     }
 
-    body.screenshot-mode .campaign-badge,
-    body.screenshot-mode .today {
+    body.screenshot-mode .note-preview {
       font-size: 10px;
-      padding: 2px 6px;
     }
 
     @media (max-width: 900px) {
@@ -521,42 +533,67 @@
       }
 
       .calendar {
-        min-width: 700px;
-        gap: 8px;
+        gap: 4px;
       }
 
       .weekday {
         font-size: 12px;
-        padding: 10px 4px;
+        padding: 8px 4px;
       }
 
-      .day {
-        min-height: 96px;
-        padding: 9px;
+      .day,
+      .day.blank {
+        min-height: 86px;
+        padding: 7px;
         border-radius: 14px;
       }
 
       .date-num {
-        font-size: 15px;
+        font-size: 14px;
       }
 
       .shift-tag {
-        font-size: 12px;
-        padding: 6px 9px;
+        font-size: 11px;
+        padding: 4px 7px;
       }
 
       .campaign-badge,
       .today {
         font-size: 10px;
-        padding: 3px 6px;
+        padding: 2px 5px;
       }
 
       .hint {
-        font-size: 11px;
+        font-size: 10px;
+      }
+
+      .note-preview {
+        font-size: 10px;
       }
     }
 
     @media (max-width: 560px) {
+      .wrap {
+        padding: 8px 6px 18px;
+      }
+
+      .header {
+        padding: 14px;
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
+
+      .header p {
+        font-size: 12px;
+      }
+
+      .toolbar {
+        padding: 10px;
+        gap: 8px;
+      }
+
       .controls {
         gap: 8px;
       }
@@ -575,6 +612,61 @@
         padding: 5px 8px;
       }
 
+      .calendar-area {
+        padding: 8px;
+      }
+
+      .month-title {
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+
+      .calendar {
+        gap: 3px;
+      }
+
+      .weekday {
+        font-size: 10px;
+        padding: 7px 2px;
+        border-radius: 10px;
+      }
+
+      .day,
+      .day.blank {
+        min-height: 74px;
+        padding: 5px;
+        gap: 4px;
+        border-radius: 10px;
+      }
+
+      .date-num {
+        font-size: 12px;
+      }
+
+      .top-badges {
+        gap: 3px;
+      }
+
+      .today,
+      .campaign-badge {
+        font-size: 9px;
+        padding: 2px 4px;
+      }
+
+      .shift-tag {
+        font-size: 10px;
+        padding: 3px 6px;
+      }
+
+      .hint {
+        font-size: 9px;
+      }
+
+      .note-preview {
+        font-size: 9px;
+        -webkit-line-clamp: 2;
+      }
+
       .modal-card {
         padding: 18px;
         border-radius: 18px;
@@ -591,7 +683,7 @@
     <div class="card">
       <div class="header">
         <h1>遠端同事排班日曆</h1>
-        <p>可切換年份、月份，點選日期後標示早班、晚班，並註記是否為電商大檔，方便截圖確認。</p>
+        <p>可切換年份、月份，點選日期後標示早班、晚班，並註記是否為電商大檔與備註，方便截圖確認。</p>
       </div>
 
       <div class="toolbar">
@@ -619,9 +711,7 @@
 
       <div class="calendar-area">
         <h2 class="month-title" id="monthTitle"></h2>
-        <div class="calendar-scroll">
-          <div class="calendar" id="calendar"></div>
-        </div>
+        <div class="calendar" id="calendar"></div>
       </div>
     </div>
   </div>
@@ -629,13 +719,13 @@
   <div class="modal" id="shiftModal">
     <div class="modal-card">
       <h2 id="modalDateTitle">設定班別</h2>
-      <p>請設定這一天的排班與是否為電商大檔。</p>
+      <p>請設定這一天的排班、是否為電商大檔與備註。</p>
 
       <div class="modal-section-title">班別</div>
       <div class="choices">
-        <button class="choice-btn" data-value="early">☀️ 早班</button>
-        <button class="choice-btn" data-value="late">🌙 晚班</button>
-        <button class="choice-btn" data-value="">清除班別</button>
+        <button type="button" class="choice-btn" data-value="early">☀️ 早班</button>
+        <button type="button" class="choice-btn" data-value="late">🌙 晚班</button>
+        <button type="button" class="choice-btn" data-value="">清除班別</button>
       </div>
 
       <div class="modal-section-title">特殊註記</div>
@@ -644,9 +734,12 @@
         <input type="checkbox" id="campaignCheckbox" />
       </div>
 
+      <div class="modal-section-title">備註</div>
+      <textarea id="noteInput" placeholder="例如：請假、外出、重要事項"></textarea>
+
       <div class="modal-actions">
-        <button id="saveModalBtn" class="primary">儲存</button>
-        <button id="closeModalBtn">取消</button>
+        <button type="button" id="saveModalBtn" class="primary">儲存</button>
+        <button type="button" id="closeModalBtn">取消</button>
       </div>
     </div>
   </div>
@@ -674,6 +767,7 @@
     const saveModalBtn = document.getElementById('saveModalBtn');
     const choiceButtons = document.querySelectorAll('.choice-btn');
     const campaignCheckbox = document.getElementById('campaignCheckbox');
+    const noteInput = document.getElementById('noteInput');
 
     const weekNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
     const shortWeekNames = ['日', '一', '二', '三', '四', '五', '六'];
@@ -685,7 +779,6 @@
     let selectedShiftValue = '';
     let shiftData = {};
 
-    // 請替換成你自己的 Firebase 設定
     const firebaseConfig = {
       apiKey: "AIzaSyDF0khZIJHtYCJhu0pTf3FEN3kL8ck7w",
       authDomain: "shift-arrangement.firebaseapp.com",
@@ -696,31 +789,21 @@
       appId: "1:218542467269:web:aa440ce0abe02c27b9e8ac"
     };
 
-    const isFirebaseReady =
-      firebaseConfig.apiKey && !firebaseConfig.apiKey.includes('請填入');
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const shiftsRef = ref(db, 'shiftCalendar');
 
-    let db = null;
-    let shiftsRef = null;
-
-    if (isFirebaseReady) {
-      const app = initializeApp(firebaseConfig);
-      db = getDatabase(app);
-      shiftsRef = ref(db, 'shiftCalendar');
-
-      onValue(shiftsRef, (snapshot) => {
-        shiftData = snapshot.val() || {};
-        renderCalendar();
-      });
-    } else {
-      alert('尚未設定 Firebase，因此目前無法即時同步。請先填入 Firebase 設定值。');
-    }
+    onValue(shiftsRef, (snapshot) => {
+      shiftData = snapshot.val() || {};
+      renderCalendar();
+    });
 
     function getDateKey(year, month, day) {
       return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
 
     function getDayData(dateKey) {
-      return shiftData[dateKey] || { shift: '', campaign: false };
+      return shiftData[dateKey] || { shift: '', campaign: false, note: '' };
     }
 
     function populateSelectors() {
@@ -748,7 +831,7 @@
     }
 
     function highlightSelectedShift() {
-      choiceButtons.forEach(btn => {
+      choiceButtons.forEach((btn) => {
         const isSelected = btn.dataset.value === selectedShiftValue;
         btn.style.outline = isSelected ? '2px solid #3e6066' : 'none';
         btn.style.boxShadow = isSelected ? '0 0 0 4px rgba(62, 96, 102, 0.08)' : 'none';
@@ -759,7 +842,7 @@
       calendar.innerHTML = '';
       monthTitle.textContent = `${currentYear} 年 ${currentMonth + 1} 月`;
 
-      shortWeekNames.forEach(name => {
+      shortWeekNames.forEach((name) => {
         const weekday = document.createElement('div');
         weekday.className = 'weekday';
         weekday.textContent = name;
@@ -769,13 +852,13 @@
       const firstDay = new Date(currentYear, currentMonth, 1).getDay();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-      for (let i = 0; i < firstDay; i++) {
+      for (let i = 0; i < firstDay; i += 1) {
         const blank = document.createElement('div');
         blank.className = 'day blank';
         calendar.appendChild(blank);
       }
 
-      for (let day = 1; day <= daysInMonth; day++) {
+      for (let day = 1; day <= daysInMonth; day += 1) {
         const date = new Date(currentYear, currentMonth, day);
         const dateKey = getDateKey(currentYear, currentMonth, day);
         const dayData = getDayData(dateKey);
@@ -790,6 +873,10 @@
           currentMonth === today.getMonth() &&
           currentYear === today.getFullYear();
 
+        const safeNote = dayData.note
+          ? String(dayData.note).replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          : '';
+
         cell.innerHTML = `
           <div class="day-top">
             <div class="date-num">${day}</div>
@@ -801,10 +888,14 @@
           <div class="hint">${weekNames[date.getDay()]}</div>
           <div class="day-bottom">
             <div class="shift-tag ${shiftInfo.cls}">${shiftInfo.text}</div>
+            ${safeNote ? `<div class="note-preview">📝 ${safeNote}</div>` : ''}
           </div>
         `;
 
-        cell.addEventListener('click', () => openModal(dateKey, `${currentYear} 年 ${currentMonth + 1} 月 ${day} 日`));
+        cell.addEventListener('click', () => {
+          openModal(dateKey, `${currentYear} 年 ${currentMonth + 1} 月 ${day} 日`);
+        });
+
         calendar.appendChild(cell);
       }
     }
@@ -814,6 +905,7 @@
       const dayData = getDayData(dateKey);
       selectedShiftValue = dayData.shift || '';
       campaignCheckbox.checked = !!dayData.campaign;
+      noteInput.value = dayData.note || '';
       highlightSelectedShift();
       modalDateTitle.textContent = label;
       shiftModal.classList.add('show');
@@ -823,10 +915,11 @@
       shiftModal.classList.remove('show');
       activeDateKey = '';
       selectedShiftValue = '';
+      noteInput.value = '';
       highlightSelectedShift();
     }
 
-    choiceButtons.forEach(btn => {
+    choiceButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
         selectedShiftValue = btn.dataset.value;
         highlightSelectedShift();
@@ -834,14 +927,16 @@
     });
 
     saveModalBtn.addEventListener('click', async () => {
-      if (!activeDateKey || !shiftsRef) return;
+      if (!activeDateKey) return;
 
+      const trimmedNote = noteInput.value.trim();
       const newData = {
         shift: selectedShiftValue,
-        campaign: campaignCheckbox.checked
+        campaign: campaignCheckbox.checked,
+        note: trimmedNote
       };
 
-      if (!newData.shift && !newData.campaign) {
+      if (!newData.shift && !newData.campaign && !newData.note) {
         await remove(ref(db, `shiftCalendar/${activeDateKey}`));
       } else {
         await set(ref(db, `shiftCalendar/${activeDateKey}`), newData);
@@ -881,16 +976,12 @@
     });
 
     clearMonthBtn.addEventListener('click', async () => {
-      if (!db) return;
-
       const confirmed = confirm(`確定要清空 ${currentYear} 年 ${currentMonth + 1} 月的所有標示嗎？`);
       if (!confirmed) return;
 
-      const entries = Object.keys(shiftData).filter(key =>
-        key.startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-`)
-      );
-
-      await Promise.all(entries.map(key => remove(ref(db, `shiftCalendar/${key}`))));
+      const prefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-`;
+      const entries = Object.keys(shiftData).filter((key) => key.startsWith(prefix));
+      await Promise.all(entries.map((key) => remove(ref(db, `shiftCalendar/${key}`))));
     });
 
     populateSelectors();
